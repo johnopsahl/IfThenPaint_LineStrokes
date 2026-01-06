@@ -8,4 +8,4 @@ A bitmap image to line strokes algorithm for cnc canvas painting.
 ![Peppers](images/Peppers_0_90.svg)
 
 ## Line Strokes For a 45 and 135 Deg Angle Scan
-![Peppers](images/Peppers_45_130.svg)
+![Peppers](images/Peppers_45_135.svg)
