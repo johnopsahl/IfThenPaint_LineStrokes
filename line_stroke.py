@@ -123,15 +123,17 @@ def calc_nested_scan_offsets(scan_width: float) -> list[float]:
     
     scan_offsets = []
     
-    scan_offset = -scan_width/2 + 0.5
+    pixel_width = 1.0
+    scan_offset = -scan_width/2 + pixel_width/2
     
     while scan_offset < scan_width/2:
         scan_offsets.append(scan_offset)
-        scan_offset += 1
+        scan_offset += pixel_width
         
     return scan_offsets
 
-def calc_scan_y_coords(scan_width: float, scan_offset: float, 
+def calc_scan_y_coords(scan_width: float, 
+                       scan_offset: float, 
                        rotated_pixel_coords: list[list[float]]) -> list[float]:
     '''
     Calculate a list of scan line y coordinates.
@@ -242,172 +244,7 @@ def eval_scan_x_range(
         x_max.append(max(x_temp))
         
     return x_min, x_max
-
-def write_lines_to_svg(filename: str, view_box: list[float], 
-                       line_end_points: list[list[float]], scan_width: float):
-    '''
-    Write scan lines to svg.
-    
-    Args:
-        filename: output svg file name
-        view_box: [minx, miny, width, height] output svg 
-            view box parameters
-        line_end_points
-        scan_width
-    
-    Returns:
-        Outputs a svg image to the data folder.
-    '''
-    
-    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
-    for i in range(len(line_end_points)):
-        x1 = line_end_points[i][0][0]
-        y1 = line_end_points[i][0][1]
-        x2 = line_end_points[i][1][0]
-        y2 = line_end_points[i][1][1]
-        dwg.add(dwg.line((x1, y1), (x2, y2), 
-                         stroke="black", 
-                         stroke_width=scan_width - 0.02))
-
-    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
-                width=view_box[2], height=view_box[3])
-    dwg.save()
-    
-def write_scnwdt_lines_to_svg(filename: str, view_box: list[float], 
-                              line_strokes: list[list[float]], 
-                              scan_widths: list[float]):
-    '''
-    Write scan lines to svg with lines of multiple scan widths.
-    
-    Args:
-        filename: output svg file name
-        view_box: [minx, miny, width, height] output svg 
-            view box parameters
-        line_strokes
-        scan_widths
-        
-    Returns:
-        Outputs a svg image to the data folder.
-    '''
-    
-    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
-    for i in range(len(line_strokes)):
-        
-        scan_width = scan_widths[i]
-        r_rgb = random.randint(1,255)
-        g_rgb = random.randint(1,255)
-        b_rgb = random.randint(1,255)
-        
-        for j in range(len(line_strokes[i])):
-            x1 = line_strokes[i][j][0][0]
-            y1 = line_strokes[i][j][0][1]
-            x2 = line_strokes[i][j][1][0]
-            y2 = line_strokes[i][j][1][1]
-            dwg.add(dwg.line((x1, y1), (x2, y2), 
-                             stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
-                             stroke_width=scan_width - 0.02))
-
-    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
-                width=view_box[2], height=view_box[3])
-    dwg.save()
-    
-def write_color_centers_line_strokes_to_svg(
-        view_box: list[float], image_color_centers: list[list[int]],
-        line_end_points: list[list[float]], scan_width: float):
-    '''
-    Write color center line strokes to svg.
-    
-    Args:
-        view_box: [minx, miny, width, height] output svg 
-            view box parameters
-        image_color_centers
-        line_end_points
-        scan_width
-    
-    Returns:
-       Outputs a svg image to the data folder. 
-    '''
-    
-    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, 
-                                        'color_center_line_strokes.svg'))
-    for i in range(len(image_color_centers)):
-        
-        # Image color centers are formatted brg so need to unpack in reverse
-        r_rgb = image_color_centers[i][2]
-        g_rgb = image_color_centers[i][1]
-        b_rgb = image_color_centers[i][0]
-        
-        for j in range(len(line_end_points[i])):
-            x1 = line_end_points[i][j][0][0]
-            y1 = line_end_points[i][j][0][1]
-            x2 = line_end_points[i][j][1][0]
-            y2 = line_end_points[i][j][1][1]
-            dwg.add(dwg.line((x1, y1), (x2, y2), 
-                             stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
-                             stroke_width=scan_width - 0.02))
-
-    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
-                width=view_box[2], height=view_box[3])
-    dwg.save()
-
-def write_color_centers_scnwdt_strokes_to_svg(
-        filename: str, view_box: list[float], 
-        image_color_centers: list[list[int]],
-        color_centers_strokes_list: list[list[list[float]]], 
-        color_centers_scan_width_list: list[list[float]]):
-    '''
-    Write color center scan width line strokes to svg.
-    
-    Args:
-        filename: output svg file name
-        view_box: [minx, miny, width, height] output svg 
-            view box parameters
-        image_color_centers
-        color_centers_strokes_list
-        color_centers_scan_width_list
-    
-    Returns:
-       Outputs a svg image to the data folder.  
-    '''
-    
-    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
-    
-    for i in range(len(color_centers_strokes_list)):
-        # For each color center
-        
-        if len(image_color_centers[0]) == 1:
-            # Image is grayscale
-            r_rgb = image_color_centers[i][0]
-            g_rgb = image_color_centers[i][0]
-            b_rgb = image_color_centers[i][0]
-        else: 
-            # Image is not grayscale
-            # Opencv image color centers are formatted brg so need to
-            # unpack in reverse
-            r_rgb = image_color_centers[i][2]
-            g_rgb = image_color_centers[i][1]
-            b_rgb = image_color_centers[i][0]
-        
-        for j in range(len(color_centers_strokes_list[i])):
-            #for each scan width
-            
-            scan_width = color_centers_scan_width_list[i][j]
-            
-            for k in range(len(color_centers_strokes_list[i][j])):
-                #for each line stroke
-                
-                x1 = color_centers_strokes_list[i][j][k][0][0]
-                y1 = color_centers_strokes_list[i][j][k][0][1]
-                x2 = color_centers_strokes_list[i][j][k][1][0]
-                y2 = color_centers_strokes_list[i][j][k][1][1]
-                dwg.add(dwg.line((x1, y1), (x2, y2), 
-                                 stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
-                                 stroke_width=scan_width - 0.02))
-
-    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
-                width=view_box[2], height=view_box[3])
-    dwg.save()
-    
+   
 def sort_indices_and_coords_by_x_coord(
         scan_pixel_indices: list[list[int]], 
         scan_pixel_coords: list[list[float]]) -> tuple[list[list[int]],
@@ -1199,10 +1036,192 @@ def select_scnwdt_line_strokes(
     scan_width_select = scan_widths[select_index_2]
             
     return strokes_select, strokes_pixel_indices_select, scan_width_select
-    
 
+def write_lines_to_svg(filename: str, view_box: list[float], 
+                       line_end_points: list[list[float]], scan_width: float):
+    '''
+    Write scan lines to svg.
+    
+    Args:
+        filename: output svg file name
+        view_box: [minx, miny, width, height] output svg 
+            view box parameters
+        line_end_points
+        scan_width
+    
+    Returns:
+        Outputs a svg image to the data folder.
+    '''
+    
+    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
+    for i in range(len(line_end_points)):
+        x1 = line_end_points[i][0][0]
+        y1 = line_end_points[i][0][1]
+        x2 = line_end_points[i][1][0]
+        y2 = line_end_points[i][1][1]
+        dwg.add(dwg.line((x1, y1), (x2, y2), 
+                         stroke="black", 
+                         stroke_width=scan_width - 0.02))
+
+    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
+                width=view_box[2], height=view_box[3])
+    dwg.save()
+    
+def write_scnwdt_lines_to_svg(filename: str, view_box: list[float], 
+                              line_strokes: list[list[float]], 
+                              scan_widths: list[float]):
+    '''
+    Write scan lines to svg with lines of multiple scan widths.
+    
+    Args:
+        filename: output svg file name
+        view_box: [minx, miny, width, height] output svg 
+            view box parameters
+        line_strokes
+        scan_widths
+        
+    Returns:
+        Outputs a svg image to the data folder.
+    '''
+    
+    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
+    for i in range(len(line_strokes)):
+        
+        scan_width = scan_widths[i]
+        r_rgb = random.randint(1,255)
+        g_rgb = random.randint(1,255)
+        b_rgb = random.randint(1,255)
+        
+        for j in range(len(line_strokes[i])):
+            x1 = line_strokes[i][j][0][0]
+            y1 = line_strokes[i][j][0][1]
+            x2 = line_strokes[i][j][1][0]
+            y2 = line_strokes[i][j][1][1]
+            dwg.add(dwg.line((x1, y1), (x2, y2), 
+                             stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
+                             stroke_width=scan_width - 0.02))
+
+    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
+                width=view_box[2], height=view_box[3])
+    dwg.save()
+    
+def write_color_centers_line_strokes_to_svg(
+        view_box: list[float], image_color_centers: list[list[int]],
+        line_end_points: list[list[float]], scan_width: float):
+    '''
+    Write color center line strokes to svg.
+    
+    Args:
+        view_box: [minx, miny, width, height] output svg 
+            view box parameters
+        image_color_centers
+        line_end_points
+        scan_width
+    
+    Returns:
+       Outputs a svg image to the data folder. 
+    '''
+    
+    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, 
+                                        'color_center_line_strokes.svg'))
+    for i in range(len(image_color_centers)):
+        
+        # Image color centers are formatted brg so need to unpack in reverse
+        r_rgb = image_color_centers[i][2]
+        g_rgb = image_color_centers[i][1]
+        b_rgb = image_color_centers[i][0]
+        
+        for j in range(len(line_end_points[i])):
+            x1 = line_end_points[i][j][0][0]
+            y1 = line_end_points[i][j][0][1]
+            x2 = line_end_points[i][j][1][0]
+            y2 = line_end_points[i][j][1][1]
+            dwg.add(dwg.line((x1, y1), (x2, y2), 
+                             stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
+                             stroke_width=scan_width - 0.02))
+
+    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
+                width=view_box[2], height=view_box[3])
+    dwg.save()
+
+def write_color_centers_scnwdt_strokes_to_svg(
+        filename: str, view_box: list[float], 
+        image_color_centers: list[list[int]],
+        color_centers_strokes_list: list[list[list[float]]], 
+        color_centers_scan_width_list: list[list[float]],
+        image_pixel_height: int,
+        image_pixel_width: int):
+    '''
+    Write color center scan width line strokes to svg.
+    
+    Args:
+        filename: output svg file name
+        view_box: [minx, miny, width, height] output svg 
+            view box parameters
+        image_color_centers
+        color_centers_strokes_list
+        color_centers_scan_width_list
+    
+    Returns:
+       Outputs a svg image to the data folder.  
+    '''
+    
+    dwg = svgwrite.Drawing(os.path.join(DATA_PATH, filename + '.svg'))
+    
+    # Draw line strokes
+    for i in range(len(color_centers_strokes_list)):
+        # For each color center
+        
+        if len(image_color_centers[0]) == 1:
+            # Image is grayscale
+            r_rgb = image_color_centers[i][0]
+            g_rgb = image_color_centers[i][0]
+            b_rgb = image_color_centers[i][0]
+        else: 
+            # Image is not grayscale
+            # Opencv image color centers are formatted brg so need to
+            # unpack in reverse
+            r_rgb = image_color_centers[i][2]
+            g_rgb = image_color_centers[i][1]
+            b_rgb = image_color_centers[i][0]
+        
+        for j in range(len(color_centers_strokes_list[i])):
+            #for each scan width
+            
+            scan_width = color_centers_scan_width_list[i][j]
+            
+            for k in range(len(color_centers_strokes_list[i][j])):
+                #for each line stroke
+                
+                x1 = color_centers_strokes_list[i][j][k][0][0]
+                y1 = color_centers_strokes_list[i][j][k][0][1]
+                x2 = color_centers_strokes_list[i][j][k][1][0]
+                y2 = color_centers_strokes_list[i][j][k][1][1]
+                dwg.add(dwg.line((x1, y1), (x2, y2), 
+                                 stroke=svgwrite.rgb(r_rgb, g_rgb, b_rgb), 
+                                 stroke_width=scan_width - 0.02))
+
+    # Draw pixel centers
+    pixel_coords = create_pixel_coords(image_pixel_height, image_pixel_width)
+    
+    for i in range(len(pixel_coords)):
+        # For each row
+        
+        for j in range(len(pixel_coords[i])):
+            # For each column
+                dwg.add(dwg.circle(
+                            center=(pixel_coords[i][j][0], 
+                                    pixel_coords[i][j][1]), 
+                            r=0.1, 
+                            fill='black', 
+                            stroke='none'))
+                
+    dwg.viewbox(minx=view_box[0], miny=view_box[1], 
+                width=view_box[2], height=view_box[3])
+    dwg.save()
+    
 #**************************************************************************
-# Functions that follow are high level and used for development only
+# Functions that follow are high level
 
 def scan_single_color_single_width_single_angle(scan_width: float,
                                                 scan_offset: float,
@@ -1430,7 +1449,9 @@ def scan_multiple_colors_greedy_algorithm(scan_widths: list[float],
                                               view_box, 
                                               image_color_centers,
                                               color_centers_strokes_list, 
-                                              color_centers_scan_width_list)
+                                              color_centers_scan_width_list,
+                                              image_height,
+                                              image_width)
 
 if __name__ == '__main__':
     
@@ -1460,8 +1481,8 @@ if __name__ == '__main__':
     for i in range(len(scan_widths)):
         scan_offsets.append(calc_nested_scan_offsets(scan_widths[i]))
     
-    # scan_angles = [i for i in range(0, 180, 15)]
-    scan_angles = [45, 135]
+    scan_angles = [i for i in range(0, 180, 15)]
+    # scan_angles = [15, 75, 105, 165]
     
     # scan_single_color_greedy_algorithm(scan_widths, 
     #                                    scan_offsets, 
